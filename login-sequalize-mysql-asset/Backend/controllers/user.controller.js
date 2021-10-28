@@ -1,8 +1,14 @@
 const db = require("../models"); // models path depend on your structure
-const bcrypt = require('bcrypt');
+const {genSaltSync, hashSync, compareSync}  = require('bcrypt');
+const jwt = require("jsonwebtoken");
+const { userController} = require("./createRole.controller");
+const dbConfig = require("../config/db.config");
+const config = require("../config/auth.config");
+const { Role } = require("../models");
 
 const User = db.User;
 const Op = db.Sequelize.Op; 
+
 
 exports.createUser = (req, res) => {
   // Validate request
@@ -20,21 +26,39 @@ exports.createUser = (req, res) => {
     lastName: req.body.lastName,
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
-    password:  bcrypt.hashSync(req.body.password, 10) 
+    password:  hashSync(req.body.password, 10) 
   };
 
   // Save user in the database
   User.create(user)
-    .then(data => {
-      res.send(data);
-    })
-    .catch(err => {
-      res.status(500).send({
-        message:
-          err.message || "Some error occurred while creating the Tutorial."
+    .then(user => {
+     if(req.body.roles){
+       Role.findAll({
+         where: {
+           name : {
+             [Op.or]: req.body.roles
+           }
+         }
+       }). then(roles => {
+         user.setRoles(roles).then(() => {
+           res.send({
+             message: "User was registered successfully!"
+            }); 
+         });
+       });
+     } else 
+     {
+       user.setRoles([1]).then (() => {
+         res.send({
+           message: "User was registed sucessfully!"
+         });
+       });
+     }
+    }).catch(err => 
+      {
+        res.status(500).send({message: err.message});
       });
-    });
-};
+    }; 
 
 
 exports.getUser = (req, res) => {
@@ -100,7 +124,7 @@ exports.getUser = (req, res) => {
         }
         else {
             res.status(404).send({
-                message: `cannot find user with id=${id}.`
+                message: `cannot find user with id=${id}`
             });
         }
         })
@@ -133,7 +157,7 @@ exports.getUser = (req, res) => {
         })
         .catch(err => {
             res.status(500).send({
-                message: "Error updating user with id =" + id
+                message: `Error updating user with id =  + ${id}`
             });
         });
     };
@@ -142,7 +166,7 @@ exports.getUser = (req, res) => {
 
         const id = req.params.id;
     
-        Tutorial.destroy({
+        User.destroy({
           where: { id: id }
         })
           .then(num => {
@@ -181,3 +205,56 @@ exports.getUser = (req, res) => {
             });
     
     };
+  
+
+      exports.login =  (req,res) => {
+
+        User.findOne ({
+          where : {
+            Email: req.body.email
+
+          }
+        })
+        .then(user => {
+          if(!user) {
+            return res.status(404).send({message: "User Not Found."});
+          }
+            var passwordIsValid = compareSync (
+              req.body.password,
+              user.password
+            );
+
+            if(!passwordIsValid) {
+              return res.status(401).send({
+             accessToken: null,
+             message: "Invalid Password!"       
+              });
+            }
+
+        var token = jwt.sign ({id:user.id}, config.secret, {expiresIn:86400 }); //24 hrs 
+        var authorities = [];
+
+        user.getRoles().then(roles => {
+          for ( let i=0; i < roles.length; i++)
+          {
+            authorities.push("ROLE_"+roles[i].name.toUpperCase());
+          }
+
+          res.status(200).send({
+            id:user.id, 
+            email: user.email,
+            roles:authorities,
+            accessToken:token
+          });
+        });
+        })
+        .catch (err => {
+          res.status(500).send ({
+            message: err.message
+          });
+        });
+
+      };
+    
+    
+

@@ -6,7 +6,7 @@ const app = express();
 
 const db = require("./models");
 const User=db.User; 
-//const Role = db.Role;
+const Role = db.Role;
 
 
 var corsOptions = {
@@ -14,17 +14,37 @@ var corsOptions = {
 }
 
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-const  Role = require ("./models/role.model");
+// db.sequelize.sync(); for production without parameters to avoid dropping data 
 
 db.sequelize.sync({ force: true }).then(() => {
     console.log("Drop and re-sync db.");
+    initial();
+    
   });
 
-let fname="hello";
+  function initial()
+  {
+    Role.create({
+      id: 1,
+      name: "user"
+    });
+   
+    Role.create({
+      id: 2,
+      name: "moderator"
+    });
+   
+    Role.create({
+      id: 3,
+      name: "admin"
+    });
+
+  }
+
+/*let fname="hello";
 let lname = "hello1";
 let emails = "test@test.ca";
 let phone = "7807807801";
@@ -50,10 +70,12 @@ const user = {
         message:
           err.message || "Some error occurred while creating the Tutorial."
       });
-    });
+    });*/
 
 
+require('./routes/auth.routes')(app);
 require('./routes/users.router')(app);
+
 
 const PORT = process.env.PORT || 8080; 
 
