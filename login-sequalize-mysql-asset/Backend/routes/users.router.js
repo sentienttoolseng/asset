@@ -1,5 +1,7 @@
 const { authJwt } = require ("../middleware");
 const  controller  = require ("../controllers/user.controller");
+const controllerAut = require("../controllers/auth.controller")
+const  controllerAutView  = require ("../controllers/user.view.controller");
 
 
 module.exports = function (app) {
@@ -11,10 +13,17 @@ module.exports = function (app) {
       );
       next();
     }); 
-  
-    //var router = require("express").Router();
-  
-    // Create a new Tutorial
+    
+
+    //Authorization
+
+    app.get("/users/all", controllerAutView.allAccess);
+    app.get("/users/user", controllerAutView.userBoard);
+    app.get("/users/mod", controllerAutView.moderatorBoard);
+    app.get("/users/admin", controllerAutView.adminBoard); 
+
+    // Routes 
+
     app.post("/", controller.createUser);
     app.get("/users", controller.findAllusers);
     app.get("/users/:id", controller.findOneUser);
@@ -22,15 +31,4 @@ module.exports = function (app) {
     app.delete("/users/:id", controller.deleteuser);
     app.delete("/users", controller.deleteAllusers);
 
-
-    
-    //app.get("/", users.findAllusers);
-    //app.get("/:id", users.findOneUser);
-    //app.put("/:id", users.UpdateUserInfo);
-    //app.delete("/:id", users.deleteuser);
-    //app.delete("/", users.deleteAllusers);
-    //router.post("/login",users.login);
-
-  
-    //app.use('/users', app);
   };

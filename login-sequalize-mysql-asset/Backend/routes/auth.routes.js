@@ -18,5 +18,5 @@ module.exports = function(app){
         ],
         controller.createUser
         );
-        app.post("/login", controller.login)
+        app.post("/auth/login", controller.login)
 }

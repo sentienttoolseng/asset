@@ -1,0 +1,5 @@
+
+
+https://www.bezkoder.com/node-js-jwt-authentication-mysql/
+
+https://www.bezkoder.com/angular-12-jwt-auth/
