@@ -24,7 +24,7 @@ module.exports = function (app) {
 
     // Routes 
 
-    app.post("/", controller.createUser);
+    app.post("/", controllerAut.createUser);
     app.get("/users", controller.findAllusers);
     app.get("/users/:id", controller.findOneUser);
     app.put("/users/:id", controller.UpdateUserInfo);
